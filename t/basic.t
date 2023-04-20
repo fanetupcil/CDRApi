@@ -1,6 +1,7 @@
 use Mojo::Base -strict;
-use lib '/home/stefan/Documents/cdrapi';
-use lib '/home/stefan/Documents/cdrapi/lib';
+
+use lib '/home/stefan/Documents/CDRApi/lib';
+
 use Test::More;
 use Test::Mojo;
 use Text::CSV_XS;
@@ -9,7 +10,7 @@ use Data::Dumper;
 
 # Create a test database connection
 ### modify file path before running
-my $file_path = '/home/stefan/Documents/cdrapi/t/tet.csv';
+my $file_path = '/home/stefan/Documents/CDRApi/t/tet.csv';
 truncate_table();
 
 my $t = Test::Mojo->new('CDRApi');

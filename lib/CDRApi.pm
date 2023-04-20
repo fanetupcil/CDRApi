@@ -1,5 +1,5 @@
 package CDRApi;
-use lib '/home/stefan/Documents/cdrapi/lib';
+use lib '/home/stefan/Documents/CDRApi/lib';
 
 use Mojo::Base 'Mojolicious', -signatures;
 use Mojo::Content::Single;
@@ -54,6 +54,13 @@ sub _db_handler {
     my $self = shift;
     $self->{dbh} = CDRApi::Model::DB->new();
     return $self;
+}
+
+sub render_error ($c, $error) {
+    $c->render(
+        status => 500,
+        json   => { error => "Error: $error" },
+    );
 }
 
 1;

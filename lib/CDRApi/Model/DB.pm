@@ -1,5 +1,5 @@
 package CDRApi::Model::DB;
-use lib '/home/stefan/Documents/cdrapi/lib';
+use lib '/home/stefan/Documents/CDRApi/lib';
 
 use CDRApi::Schema;
 use DBIx::Class ();

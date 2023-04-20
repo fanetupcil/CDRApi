@@ -1,6 +1,6 @@
 ---
 secrets: 
 - 3d40e81a51b8d0c601b4b7d22bd272772b37a61f
-upload:  '/home/stefan/Documents/cdrapi/warehouse'
+upload:  '/home/stefan/Documents/CDRApi/warehouse'
 batch_size: 1000
 max_request_size: 1677721600

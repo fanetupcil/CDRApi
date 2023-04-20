@@ -1,29 +1,21 @@
 package CDRApi::Controller::Cdr;
-use Mojo::Base 'Mojolicious::Controller', -signatures;
+use lib '/home/stefan/Documents/CDRApi/lib';
 
-# This action will render a template
+use Mojo::Base 'Mojolicious::Controller', -signatures;
+use Mojo::Promise;
+use CDRApi::Model::CdrModel;
+
+
+
 sub get_cdr_by_reference ($self) {
     my $dbh       = $self->app->{dbh};           # Database handler
     my $reference = $self->stash('reference');
+    my $cdr_model = CDRApi::Model::CdrModel->new( $self->app->{dbh} );
 
     # Fetch all the threads from the thread table;
-    my @rs =
-      $dbh->resultset('CallRecord')->search( { reference => $reference } );
+    my $rs =  $cdr_model->get_cdr_by_reference($reference);
 
-    @rs = map {
-        {
-            caller_id => $_->caller_id,
-            recipient => $_->recipient,
-            call_date => $_->call_date->ymd,
-            end_time  => $_->end_time,
-            duration  => $_->duration,
-            cost      => $_->cost,
-            reference => $_->reference,
-            currency  => $_->currency,
-            type      => $_->type
-        }
-    } @rs;
-    $self->render( json => \@rs );
+    $self->render( json => $rs  );
 
 }
 
@@ -33,9 +25,9 @@ sub get_call_stats ($self) {
     my $caller_id  = $self->param('caller_id');
     my $call_type  = $self->param('call_type');
 
-    my $result;
     my $dbh = $self->app->{dbh};
     my $v   = $self->validation;
+    my $cdr_model = CDRApi::Model::CdrModel->new( $self->app->{dbh} );
 
     $v->required('start_date')->like(qr/\d{4}\-\d{2}-\d/);
     $v->required('end_date')->like(qr/\d{4}\-\d{2}-\d/);
@@ -46,28 +38,9 @@ sub get_call_stats ($self) {
     return
       if ( $self->check_params( $start_date, $end_date, $v ) );
 
-    my $rs = $dbh->resultset('CallRecord')->search(
-        {
-            call_date => {
-                '>=' => $start_date,
-                '<'  => $end_date,
-            },
-            $call_type ? ( type => $call_type ) : (),
-        },
-        {
-            select => [ { count => '*' }, { sum => 'duration' }, ],
-            as     => [qw(call_count total_duration)],
-        },
-    );
+    my $rs = $cdr_model->get_call_stats($start_date, $end_date, $call_type);
 
-    $result = $rs->next;
-
-    $result = {
-        call_count     => $result->get_column('call_count'),
-        total_duration => $result->get_column('total_duration') || '0'
-    };
-
-    $self->render( json => $result );
+    $self->render( json => $rs );
 
 }
 
@@ -77,9 +50,9 @@ sub get_cdr_by_callerid ($self) {
     my $caller_id  = $self->param('caller_id');
     my $call_type  = $self->param('call_type');
 
-    my $result;
     my $dbh = $self->app->{dbh};
     my $v   = $self->validation;
+    my $cdr_model = CDRApi::Model::CdrModel->new( $self->app->{dbh} );
 
     $v->required('start_date')->like(qr/\d{4}\-\d{2}-\d/);
     $v->required('end_date')->like(qr/\d{4}\-\d{2}-\d/);
@@ -89,33 +62,9 @@ sub get_cdr_by_callerid ($self) {
     return
       if ( $self->check_params( $start_date, $end_date, $v ) );
 
-    my @rs = $dbh->resultset('CallRecord')->search(
-        {
-            caller_id => $caller_id,
-            call_date => {
-                '>=' => $start_date,
-                '<'  => $end_date,
-            },
-            defined $call_type ? ( type => $call_type ) : ()
-        }
+    my $rs = $cdr_model->get_cdr_by_callerid($start_date, $end_date, $caller_id, $call_type);
 
-    );
-
-    @rs = map {
-        {
-            caller_id => $_->caller_id,
-            recipient => $_->recipient,
-            call_date => $_->call_date->ymd,
-            end_time  => $_->end_time,
-            duration  => $_->duration,
-            cost      => $_->cost,
-            reference => $_->reference,
-            currency  => $_->currency,
-            type      => $_->type
-        }
-    } @rs;
-
-    $self->render( json => \@rs );
+    $self->render( json => $rs );
 
 }
 
@@ -128,6 +77,7 @@ sub get_most_expensive_calls ($self) {
 
     my $dbh = $self->app->{dbh};
     my $v   = $self->validation;
+    my $cdr_model = CDRApi::Model::CdrModel->new( $self->app->{dbh} );
 
     $v->optional('call_type')->in( '1', '2' );
     $v->required('n')->like(qr/\d+/);
@@ -138,35 +88,11 @@ sub get_most_expensive_calls ($self) {
     return
       if ( $self->check_params( $start_date, $end_date, $v ) );
 
-    my @rs = $dbh->resultset('CallRecord')->search(
-        {
-            caller_id => $caller_id,
-            call_date => { '>=' => $start_date, '<' => $end_date },
-            currency  => 'GBP',
-            defined $call_type ? ( type => $call_type ) : (),
-        },
-        {
-            order_by => { -desc => 'cost' },
-            rows     => $n,
-        }
-    );
-
-    @rs = map {
-        {
-            caller_id => $_->caller_id,
-            recipient => $_->recipient,
-            call_date => $_->call_date->ymd,
-            end_time  => $_->end_time,
-            duration  => $_->duration,
-            cost      => $_->cost,
-            reference => $_->reference,
-            currency  => $_->currency,
-            type      => $_->type
-        }
-    } @rs;
-
-    $self->render( json => \@rs );
+    my $rs = cdr_model->get_cdr_by_callerid($caller_id, $start_date, $end_date, $call_type, $n);
+    
+    $self->render( json => $rs );
 }
+
 
 sub check_params ( $self, $start_date, $end_date, $v ) {
     my $start_dt = DateTime->new(
