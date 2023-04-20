@@ -27,7 +27,7 @@ sub get_cdr_by_reference {
     return \@rs;
 }
 
-sub get_call_stats {
+sub get_calls_stats {
     my ( $self, $start_date, $end_date, $call_type ) = @_;
 
     my $rs = $self->{dbh}->resultset('CallRecord')->search(
@@ -43,7 +43,7 @@ sub get_call_stats {
             as     => [qw(call_count total_duration)],
         },
     );
-
+use Data::Dumper; print Dumper $rs;
     $rs = $rs->next;
 
     $rs = {
@@ -54,50 +54,27 @@ sub get_call_stats {
     return $rs;
 }
 
-sub get_cdr_by_callerid {
-    my ( $self, $start_date, $end_date, $caller_id, $call_type ) = @_;
+sub get_filtered_cdrs {
+    my ( $self, $start_date, $end_date, $caller_id, $call_type, $n) = @_;
 
     my @rs = $self->{dbh}->resultset('CallRecord')->search(
-        {
+        {   
             caller_id => $caller_id,
             call_date => {
                 '>=' => $start_date,
                 '<'  => $end_date,
             },
-            defined $call_type ? ( type => $call_type ) : ()
-        }
-    );
-
-    @rs = map {
-        {
-            caller_id => $_->caller_id,
-            recipient => $_->recipient,
-            call_date => $_->call_date->ymd,
-            end_time  => $_->end_time,
-            duration  => $_->duration,
-            cost      => $_->cost,
-            reference => $_->reference,
-            currency  => $_->currency,
-            type      => $_->type
-        }
-    } @rs;
-
-    return \@rs;
-}
-
-sub get_most_expensive_calls {
-    my ( $self, $caller_id, $start_date, $end_date, $call_type, $n ) = @_;
-
-    my @rs = $self->{dbh}->resultset('CallRecord')->search(
-        {
-            caller_id => $caller_id,
-            call_date => { '>=' => $start_date, '<' => $end_date },
-            currency  => 'GBP',
             defined $call_type ? ( type => $call_type ) : (),
+            defined $n ? (  currency  => 'GBP') : ()
+           
         },
         {
-            order_by => { -desc => 'cost' },
-            rows     => $n,
+            defined $n
+            ? (
+                order_by => { -desc => 'cost' },
+                rows     => $n
+              )
+            : ()
         }
     );
 

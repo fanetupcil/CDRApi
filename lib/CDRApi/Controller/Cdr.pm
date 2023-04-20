@@ -8,91 +8,61 @@ use CDRApi::Model::CdrModel;
 
 
 sub get_cdr_by_reference ($self) {
-    my $dbh       = $self->app->{dbh};           # Database handler
+    my $dbh       = $self->app->{dbh};
     my $reference = $self->stash('reference');
     my $cdr_model = CDRApi::Model::CdrModel->new( $self->app->{dbh} );
 
-    # Fetch all the threads from the thread table;
     my $rs =  $cdr_model->get_cdr_by_reference($reference);
 
     $self->render( json => $rs  );
-
 }
 
-sub get_call_stats ($self) {
+sub get_calls_stats ($self) {
     my $start_date = $self->param('start_date');
     my $end_date   = $self->param('end_date');
-    my $caller_id  = $self->param('caller_id');
     my $call_type  = $self->param('call_type');
 
-    my $dbh = $self->app->{dbh};
     my $v   = $self->validation;
     my $cdr_model = CDRApi::Model::CdrModel->new( $self->app->{dbh} );
 
     $v->required('start_date')->like(qr/\d{4}\-\d{2}-\d/);
     $v->required('end_date')->like(qr/\d{4}\-\d{2}-\d/);
-    $v->optional('aggregate')->in( 'true', 'false' );
     $v->optional('call_type')->in( '1',    '2' );
-
+use Data::Dumper; print Dumper "intrat";
 # Verify that the distance between start date and end date is not longer than one month and the params
     return
       if ( $self->check_params( $start_date, $end_date, $v ) );
 
-    my $rs = $cdr_model->get_call_stats($start_date, $end_date, $call_type);
+    my $rs = $cdr_model->get_calls_stats($start_date, $end_date, $call_type);
 
     $self->render( json => $rs );
 
 }
 
-sub get_cdr_by_callerid ($self) {
+sub get_filtered_cdrs ($self) {
     my $start_date = $self->param('start_date');
     my $end_date   = $self->param('end_date');
     my $caller_id  = $self->param('caller_id');
-    my $call_type  = $self->param('call_type');
-
-    my $dbh = $self->app->{dbh};
-    my $v   = $self->validation;
-    my $cdr_model = CDRApi::Model::CdrModel->new( $self->app->{dbh} );
-
-    $v->required('start_date')->like(qr/\d{4}\-\d{2}-\d/);
-    $v->required('end_date')->like(qr/\d{4}\-\d{2}-\d/);
-    $v->optional('call_type')->in( '1', '2' );
-    $v->required('caller_id')->like(qr/\d+/);
-
-    return
-      if ( $self->check_params( $start_date, $end_date, $v ) );
-
-    my $rs = $cdr_model->get_cdr_by_callerid($start_date, $end_date, $caller_id, $call_type);
-
-    $self->render( json => $rs );
-
-}
-
-sub get_most_expensive_calls ($self) {
-    my $caller_id  = $self->param('caller_id');
-    my $start_date = $self->param('start_date');
-    my $end_date   = $self->param('end_date');
     my $call_type  = $self->param('call_type');
     my $n          = $self->param('n');
 
-    my $dbh = $self->app->{dbh};
     my $v   = $self->validation;
     my $cdr_model = CDRApi::Model::CdrModel->new( $self->app->{dbh} );
 
-    $v->optional('call_type')->in( '1', '2' );
-    $v->required('n')->like(qr/\d+/);
     $v->required('start_date')->like(qr/\d{4}\-\d{2}-\d/);
     $v->required('end_date')->like(qr/\d{4}\-\d{2}-\d/);
+    $v->optional('call_type')->in( '1', '2' );
     $v->required('caller_id')->like(qr/\d+/);
+    $v->optional('n')->like(qr/\d+/);
 
     return
       if ( $self->check_params( $start_date, $end_date, $v ) );
 
-    my $rs = cdr_model->get_cdr_by_callerid($caller_id, $start_date, $end_date, $call_type, $n);
-    
-    $self->render( json => $rs );
-}
+    my $rs = $cdr_model->get_filtered_cdrs($start_date, $end_date, $caller_id, $call_type, $n);
 
+    $self->render( json => $rs );
+
+}
 
 sub check_params ( $self, $start_date, $end_date, $v ) {
     my $start_dt = DateTime->new(

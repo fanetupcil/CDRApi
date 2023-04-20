@@ -20,7 +20,7 @@ $t->post_ok( '/data/load' => form => { file => { file => $file_path } } )
   ->status_is(200)->json_is( '/message' => "CSV Imported " );
 
 ### get CDRS by reference
-$t->get_ok('/cdrs/reference/CFD0F0B32F61D287CF34CD3DC43EDF87F')->status_is(200)
+$t->get_ok('/v1/cdrs/CFD0F0B32F61D287CF34CD3DC43EDF87F')->status_is(200)
   ->content_type_is('application/json;charset=UTF-8')->json_is(
     [
         {
@@ -37,7 +37,7 @@ $t->get_ok('/cdrs/reference/CFD0F0B32F61D287CF34CD3DC43EDF87F')->status_is(200)
     ]
   );
 
-$t->get_ok('/cdrs/reference/C2BF812F9B32CD37164AB07C69A36111D')->status_is(200)
+$t->get_ok('/v1/cdrs/C2BF812F9B32CD37164AB07C69A36111D')->status_is(200)
   ->content_type_is('application/json;charset=UTF-8')->json_is(
     [
         {
@@ -54,19 +54,19 @@ $t->get_ok('/cdrs/reference/C2BF812F9B32CD37164AB07C69A36111D')->status_is(200)
     ]
   );
 
-$t->get_ok('/cdrs/reference/C')->status_is(200)
+$t->get_ok('/v1/cdrs/C')->status_is(200)
   ->content_type_is('application/json;charset=UTF-8')->json_is( [] );
 
-$t->get_ok('/cdrs/stats?start_date=2016-08-01&end_date=2016-08-28&call_type=2')
+$t->get_ok('/v1/cdrs/stats?start_date=2016-08-01&end_date=2016-08-28&call_type=2')
   ->status_is(200)->content_type_is('application/json;charset=UTF-8')
   ->json_is( { "call_count" => 141, "total_duration" => "19428" } );
 
-$t->get_ok('/cdrs/stats?start_date=2016-08-01&end_date=2016-08-28&call_type=3')
+$t->get_ok('/v1/cdrs/stats?start_date=2016-08-01&end_date=2016-08-28&call_type=3')
   ->status_is(400)->content_type_is('application/json;charset=UTF-8')
   ->json_is( { "error" => "Invalid parameters" } );
 
 $t->get_ok(
-'/cdrs/caller?start_date=2016-08-01&end_date=2016-08-20&call_type=2&caller_id=443330000000'
+'/v1/cdrs?start_date=2016-08-01&end_date=2016-08-20&call_type=2&caller_id=443330000000'
 )->status_is(200)->content_type_is('application/json;charset=UTF-8');
 
 my $json_data = $t->tx->res->json;
@@ -86,7 +86,7 @@ for my $item (@$json_data) {
 }
 
 $t->get_ok(
-'/cdrs/most_expensive/?start_date=2016-08-01&end_date=2016-08-28&call_type=2&caller_id=442036000000&n=1000'
+'/v1/cdrs?start_date=2016-08-01&end_date=2016-08-28&call_type=2&caller_id=442036000000&n=1000'
 )->status_is(200)->content_type_is('application/json;charset=UTF-8');
 $json_data = $t->tx->res->json;
 

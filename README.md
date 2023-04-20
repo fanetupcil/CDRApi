@@ -1,43 +1,36 @@
 # CDRApi
 Call Detail Record Business Intelligence Platform API
 
-
-
-# Technology and choises
-For the technologies I choose Mojoulicious framework and mysql database with modules like  Mojo::Upload Mojo::IOLoop Mojo::Promise Mojo::IOLoop::Subprocess DBIx::Class. I was not so familiar with all the technologies but I tried to make the api technologies as close as possible as the ones that you use.
+## Technology and Choices
+For the technologies, Mojoulicious framework and MySQL database were chosen, along with modules such as Mojo::Upload, Mojo::IOLoop, Mojo::Promise, Mojo::IOLoop::Subprocess, and DBIx::Class. Although not completely familiar with all the technologies, an attempt was made to select technologies as close as possible to those currently in use.
 
 # Assumptions
-I assumed that in the future we will not use microservices, and the future functionality of the api will be diffrent from the one existing so the controller will not get too crowded with code. Also the upload is handled differently in the future.
-# Database
-I assumed that the database has the following structure, and is a mysql database. 
-    caller_id BIGINT not null,
-    recipient BIGINT not null,
-    call_date DATE,
-    end_time TIME,
-    duration INT,
-    cost DECIMAL(10, 3),
-    reference VARCHAR(255) not null,
-    currency VARCHAR(3),
-    type ENUM('1', '2'),
-	PRIMARY KEY (reference)
+It was assumed that in the future, microservices will not be utilized, and the future functionality of the API will differ from the existing one, preventing the controller from becoming overcrowded with code. Additionally, it is assumed that file upload handling will change in the future.
 
-caller_id and recipient are bigints, we could do a varchar too. But i choose bigint because we have a extra layer of protection in order not to insert letters
-call date has the format yyyy-mm-dd (different from the csv)
-cost is a max 10 digits with 3 floats.
-type only has 2 possible values 1 and 2 
-the primary key is the reference
+## Database
+The MySQL database is assumed to have the following structure:
+        caller_id BIGINT not null,
+        recipient BIGINT not null,
+        call_date DATE,
+        end_time TIME,
+        duration INT,
+        cost DECIMAL(10, 3),
+        reference VARCHAR(255) not null,
+        currency VARCHAR(3),
+        type ENUM('1', '2'),
+        PRIMARY KEY (reference)
+`caller_id` and `recipient` are bigints, which could be varchar as well. However, bigint was chosen for an extra layer of protection against inserting letters. `call_date` has the format yyyy-mm-dd (different from the CSV), and `cost` has a maximum of 10 digits with 3 decimal places. The `type` field only has two possible values (1 and 2), and the primary key is the `reference` field.
 
-# File upload and load
-I assumed that the user has a method of finding the bad rows in the file, or will be a future enhancement. For this reason when we upload the file and load it(more about the file loading in the consideratios/future enhancements) we only have a message of success and a number for the bad rows without putting them in a log file.
+## File Upload and Load
+It is assumed that the user can identify bad rows in the file or that this will be a future enhancement. When uploading and loading the file, only a success message and a number of bad rows are displayed, without logging them in a separate file.
 
-# Controllers
-I split the controllers into 2 one for data uploading and loading and one for cdr/stats retrieving. For this api it could be done in 1 controller without beeing unmanagable. but a future consideration to change the upload and load made me split them;
+## Controllers
+The controllers are divided into two: one for data uploading and loading, and another for cdr/stats retrieval. Although it could be managed with one controller for this API, future considerations for changing the upload and load process led to the decision to split them.
 
-# Asynchronous?
- I assumed that for i would not have a high volume of concurrent requests and the queries are rather simple so i didnt use async subturines only for upload/load 
+## Asynchronous?
+It is assumed that there will not be a high volume of concurrent requests and the queries are relatively simple, so asynchronous subroutines were not used, except for upload/load.
 
-
-# How to run the app?
+# How to Run the App?
 You'll need Mojoulicious and sqlserver installed on the computer;
 
 First we need to create the database : 
@@ -60,43 +53,31 @@ Crete the table;
             PRIMARY KEY (reference)
         );
 
-You can insert a value to see that everything is working properly 
-
-        INSERT INTO call_records (caller_id, recipient, call_date,end_time, duration, cost, reference,currency,type)
-        VALUES ('442036000000','44800833833',STR_TO_DATE("16/08/2016", "%d/%m/%Y"),'14:00:47','244','0','C50B5A7BDB8D68B8512BB14A9D363CAA1','GBP','2'); 
-
 We need to create a db schema. Open dbschema.conf in the root folder and change the user and password if needed. After that run dbicdump dbschema.conf
 it dumps the database structure unde the Schema folder. Open CDRApi/lib/CDRApi/Model/DB.pm change the username and password if needed and the use lib with your path to the lib directory;
 
 Modify the paths also in the test file CDRApi/t/basic.t and config file CDRApi/c_d_r_api.yml
 
 If the configuration is correct and the sql server is running you should be able to run the app.
-    ~/Documents/CDRApi$ morbo  -l http://localhost:3001 script/cdrapi  
+                ~/Documents/CDRApi$ morbo  -l http://localhost:3001 script/cdrapi  
 You can choose any port you want.  
 
-You can do a 
-    curl 'http://127.0.0.1:3001/cdrs/reference/a'
+Execute
+                curl 'http://127.0.0.1:3001/cdrs/reference/a'
 and you should expect and '[]' response
 
-run 
-    prove -v t/basic.t 
-from the CDRApi directory
-You should pass al the tests and now the app is running and has been tested 
-# see Documentation.doc for usage documentation
+Execute
+                prove -v t/basic.t 
 
-# considerations/future enhancements
-1. In its current form, the code is relatively simple and straightforward. However, if you expect the application to grow and incorporate more features, it might be beneficial to split the code or create additional classes. 
-    -Create a separate class for handling database interactions (now handled directly in the controller UPDATE: created a model to handle data)
-    -Create a separate class for input validation (input validation is basic in this app, we recieve an error if the input is not valid subroutine also in the controller)
-    -Split the controller into smaller controllers
+
+## See `CDRapi_Documentation.doc` for Usage Documentation
+
+# Considerations/Future Enhancements
+1. Code simplicity: the current code is simple and straightforward. However, if the application is expected to grow, consider splitting the code or creating additional classes.
+        Create a separate class for handling database interactions (now handled directly in the controller UPDATE: created a model to handle data)
+        Create a separate class for input validation (input validation is basic in this app, we recieve an error if the input is not valid subroutine also in the controller)
+        Split the controller into smaller controllers
 All of this was taken into account, but the size of the app made me keep it as simple and small as possible.
-Also we should have in mind if we want to adapt the api to support microservices. If that was the case then the app will be for example split in 3 pieces:
-    cdr_by_reference
-    call_statistics
-    caller_id_and_expensive_calls
-for each microservice.
-
-2. API versioning. For this app size api versioning was not implemented but taken into consideration.
-3. File upload. In the current api the file is uplaoded directly and full size, but we can consider third party hosting services (ex amazon s3), sftp or using the client to split the files into smaller parts and then upload them individually. 
-4. the endpoints could suffer modifications depending on the future requirements.
-5. The validation could be improved in the future.
+2. File upload: consider third-party hosting services, SFTP, or providing a streaming mechanism to allow for multipart file upload.
+3. Endpoint modifications: may be required depending on future requirements.
+4. Validation: improvements may be needed in the future.
