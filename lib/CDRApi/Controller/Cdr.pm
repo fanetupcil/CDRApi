@@ -103,10 +103,15 @@ sub get_cdr_by_callerid ($self) {
 
     @rs = map {
         {
-            reference => $_->reference,
             caller_id => $_->caller_id,
             recipient => $_->recipient,
-            call_date => $_->call_date->ymd
+            call_date => $_->call_date->ymd,
+            end_time  => $_->end_time,
+            duration  => $_->duration,
+            cost      => $_->cost,
+            reference => $_->reference,
+            currency  => $_->currency,
+            type      => $_->type
         }
     } @rs;
 
