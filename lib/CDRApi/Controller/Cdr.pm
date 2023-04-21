@@ -28,7 +28,7 @@ sub get_calls_stats ($self) {
     $v->required('start_date')->like(qr/\d{4}\-\d{2}-\d/);
     $v->required('end_date')->like(qr/\d{4}\-\d{2}-\d/);
     $v->optional('call_type')->in( '1',    '2' );
-use Data::Dumper; print Dumper "intrat";
+
 # Verify that the distance between start date and end date is not longer than one month and the params
     return
       if ( $self->check_params( $start_date, $end_date, $v ) );

@@ -43,7 +43,6 @@ sub get_calls_stats {
             as     => [qw(call_count total_duration)],
         },
     );
-use Data::Dumper; print Dumper $rs;
     $rs = $rs->next;
 
     $rs = {
